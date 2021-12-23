@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"startupdigital/database"
 	"startupdigital/model"
 	"strconv"
@@ -14,18 +15,33 @@ import (
 const SecretKey = "secret"
 
 func Register(c *fiber.Ctx) error {
-	var data map[string]string
+	var data map[string]interface{}
 
 	if err := c.BodyParser(&data); err != nil {
 		return err
 	}
 
-	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+	password := fmt.Sprintf("%v", data["password"])
+
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+
+	name := fmt.Sprintf("%v", data["name"])
+	email := fmt.Sprintf("%v", data["email"])
+	phone := fmt.Sprintf("%v", data["phone"])
+	var jk uint = uint(data["jk"].(float64))
+	var role uint = 1
+	var domisili uint = uint(data["domisili"].(float64))
+	var kota_pelak uint = uint(data["kota_pelak"].(float64))
 
 	user := model.User{
-		Name:     data["name"],
-		Email:    data["email"],
-		Password: password,
+		Name:       name,
+		Phone:      phone,
+		Jk:         jk,
+		Role:       role,
+		Domisili:   domisili,
+		Kota_pelak: kota_pelak,
+		Email:      email,
+		Password:   passwordHash,
 	}
 
 	database.DB.Create(&user)
@@ -82,7 +98,7 @@ func Login(c *fiber.Ctx) error {
 	c.Cookie(&cookie)
 
 	return c.JSON(fiber.Map{
-		"message": "success",
+		"message": "Login Success",
 	})
 }
 
@@ -121,5 +137,28 @@ func Logout(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "success",
+	})
+}
+
+func JawabTest(c *fiber.Ctx) error {
+	data := map[string]interface{}{}
+	if err := c.BodyParser(&data); err != nil {
+		return c.JSON(fiber.Map{
+			"message": err,
+		})
+	}
+
+	var soal uint = uint(data["soal"].(float64))
+	var jawaban uint = uint(data["jawaban"].(float64))
+
+	JawabTest := model.JawabTest{
+		Soal:    soal,
+		Jawaban: jawaban,
+	}
+
+	database.DB.Create(&JawabTest)
+
+	return c.JSON(fiber.Map{
+		"message": "Success Menjawab",
 	})
 }
